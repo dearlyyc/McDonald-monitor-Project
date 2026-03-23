@@ -103,7 +103,7 @@ class MonitorScheduler:
             print(f"  [Fail] 備份任務中斷: {e}")
 
     def _generate_obsidian_report(self, dest_path):
-        """自動生成 Obsidian 格式的輿情報告，並存入專屬的報告資料夾"""
+        """自動生成 Obsidian 格式的輿情報告，並存入專屬的 Daily_Reports 資料夾"""
         import os
         from datetime import datetime
         print("  正在生成 Obsidian 今日報告...")
