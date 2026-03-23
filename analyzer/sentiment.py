@@ -1,9 +1,10 @@
-"""
-LLM 情感分析模組
-支援 OpenAI GPT 與 Google Gemini
-"""
 import json
 import re
+import warnings
+import time
+
+# 靜音 google-generativeai 的過期警告
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 import config
 
@@ -86,11 +87,11 @@ class SentimentAnalyzer:
         """批量分析多篇文章，顯著提升速度。"""
         import time
         results = []
-        batch_size = 10  # 每組分析 10 篇
+        batch_size = 5  # 減少每組預設數量以避開 2.5 系列可能的更嚴格限制
         
         for i in range(0, len(articles), batch_size):
             batch = articles[i : i + batch_size]
-            print(f"  正在批量分析 ({i+1}~{min(i+batch_size, len(articles))}/{len(articles)})...")
+            print(f"  正在分析第 {i//batch_size + 1} 組 ({i+1}~{min(i+batch_size, len(articles))}/{len(articles)})...")
             
             # 準備批量資料
             articles_text = ""
@@ -108,6 +109,11 @@ class SentimentAnalyzer:
                 try:
                     if self.provider == "gemini":
                         response_text = self._call_gemini(prompt)
+                        # Debug: 列印前 100 字回應
+                        if response_text:
+                            print(f"    [Success] 已獲得回應，內容長度: {len(response_text)} 字")
+                        else:
+                            print("    [Warning] 回應為空")
                     else:
                         response_text = self._call_openai(prompt)
                     break
@@ -131,26 +137,46 @@ class SentimentAnalyzer:
                 except Exception as e:
                     print(f"    [Fail] 解析批量結果失敗: {e}")
             
-            # 任務間插入更強的靜態冷卻時間避免連續觸發限制
-            print(f"    ↳ 此批次完成，進入 10 秒冷卻...")
-            time.sleep(10) 
+            # 任務間插入更強的靜態冷卻時間
+            wait_between = 15
+            print(f"    ↳ 此組完成，冷卻 {wait_between} 秒...")
+            time.sleep(wait_between) 
 
         return results
 
     def _parse_batch_response(self, text: str) -> list[dict]:
-        """解析批量回應的 JSON 列表"""
+        """解析批量回應的 JSON 列表，增強穩定性"""
+        if not text or not text.strip():
+            print("[Analyzer] 批量回應內容為空")
+            return []
+            
         text = text.strip()
-        if text.startswith("```"):
-            lines = text.split("\n")
-            text = "\n".join(lines[1:-1])
+        
+        # 尋找第一個 [ 和最後一個 ]
+        start = text.find('[')
+        end = text.rfind(']')
+        
+        if start != -1 and end != -1 and end > start:
+            clean_text = text[start:end+1]
+        else:
+            # 如果找不到列表，尋找單個物件並包裝
+            start = text.find('{')
+            end = text.rfind('}')
+            if start != -1 and end != -1 and end > start:
+                clean_text = f"[{text[start:end+1]}]"
+            else:
+                clean_text = text
 
         try:
-            results = json.loads(text)
+            results = json.loads(clean_text)
             if isinstance(results, list):
                 return results
             return [results]
-        except json.JSONDecodeError:
-            print("[Analyzer] 批量解析 JSON 失敗，嘗試回退解析")
+        except json.JSONDecodeError as e:
+            print(f"[Analyzer] 批量解析 JSON 失敗: {e}")
+            print(f"--- 嘗試解析的片段 (前 100 字) ---")
+            print(clean_text[:100])
+            print("-----------------------------------")
             return []
 
     def generate_daily_summary(self, articles: list[dict]) -> str:
@@ -213,12 +239,13 @@ class SentimentAnalyzer:
         genai.configure(api_key=config.GEMINI_API_KEY)
         
         # 嘗試模型列表 (按照優先順序)
-        models_to_try = [config.GEMINI_MODEL, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+        models_to_try = [config.GEMINI_MODEL, "gemini-2.0-flash", "gemini-1.5-flash"]
         last_error = None
         
         for model_name in models_to_try:
             try:
                 model = genai.GenerativeModel(model_name)
+                # 設定更寬鬆的安全過濾 (適用於輿情分析)
                 safety_settings = [
                     {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
                     {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
@@ -231,9 +258,16 @@ class SentimentAnalyzer:
                     safety_settings=safety_settings,
                     generation_config=genai.types.GenerationConfig(
                         temperature=0.3,
-                        max_output_tokens=500,
+                        max_output_tokens=1000, # 批量分析需要更長的輸出空間
                     )
                 )
+                
+                if not response.text:
+                    # 檢查是否被安全攔截
+                    if hasattr(response, 'candidates') and response.candidates[0].finish_reason != 1:
+                        print(f"    [Warning] Gemini 攔截了回應 (原因: {response.candidates[0].finish_reason})")
+                    return ""
+                    
                 return response.text
             except Exception as e:
                 # 只有當錯誤是 404 (找不到模型) 才繼續試下一個
@@ -247,38 +281,38 @@ class SentimentAnalyzer:
         raise last_error if last_error else ValueError("找不到可用的 Gemini 模型 (404)")
 
     def _parse_response(self, text: str) -> dict:
-        """解析 LLM 回應的 JSON"""
+        """解析 LLM 回應的 JSON, 具備更強的容錯能力"""
+        if not text or not text.strip():
+            return {
+                "sentiment": "neutral",
+                "score": 0.0,
+                "reason": "回應為空",
+                "summary": "無內容",
+            }
+            
         text = text.strip()
-        # 清除可能的 markdown code block
-        if text.startswith("```"):
-            lines = text.split("\n")
-            text = "\n".join(lines[1:-1])
+        
+        # 尋找第一個 { 和最後一個 }
+        start = text.find('{')
+        end = text.rfind('}')
+        
+        if start != -1 and end != -1 and end > start:
+            clean_text = text[start:end+1]
+        else:
+            clean_text = text
 
         # 嘗試直接 parse
         try:
-            data = json.loads(text)
+            data = json.loads(clean_text)
         except json.JSONDecodeError:
-            # 嘗試用 regex 擷取 JSON
-            match = re.search(r'\{[^{}]*\}', text, re.DOTALL)
-            if match:
-                try:
-                    data = json.loads(match.group())
-                except json.JSONDecodeError:
-                    return {
-                        "sentiment": "neutral",
-                        "score": 0.0,
-                        "reason": "LLM 回應格式無法解析",
-                        "summary": text[:50],
-                        "status": "failed",
-                    }
-            else:
-                return {
-                    "sentiment": "neutral",
-                    "score": 0.0,
-                    "reason": "LLM 回應格式無法解析",
-                    "summary": text[:50],
-                    "status": "failed",
-                }
+            print(f"[Analyzer] JSON 解析失敗: {clean_text[:100]}...")
+            return {
+                "sentiment": "neutral",
+                "score": 0.0,
+                "reason": "LLM 回應格式錯誤",
+                "summary": text[:50],
+                "status": "failed",
+            }
 
         # 驗證並標準化
         valid_sentiments = {"positive", "negative", "neutral"}

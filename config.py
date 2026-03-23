@@ -17,14 +17,7 @@ SEARCH_KEYWORDS = ["麥當勞", "McDonald's", "McDonalds", "麥當勞 活動", "
 GOOGLE_NEWS_LANG = "zh-TW"
 GOOGLE_NEWS_REGION = "TW"
 
-# Facebook 粉絲頁（搜集公開貼文）
-FACEBOOK_PAGES = ["McDonalds", "McDonaldsTaiwan"]
-
-# Instagram 帳號
-INSTAGRAM_ACCOUNTS = ["mcdonalds", "mcdonaldstw"]
-
-# Google Maps 地點（用於評論搜集）
-GOOGLE_PLACES_KEYWORDS = ["麥當勞"]
+# (社群搜集目前已關閉，節省額度)
 
 # Tavily API 授權金鑰
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "")
@@ -44,7 +37,7 @@ OPENAI_MODEL = "gpt-4o-mini"
 
 # Google Gemini 設定
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-2.5-flash-lite"
 
 # =============================================================================
 # 通知設定
@@ -87,5 +80,7 @@ FLASK_HOST = "0.0.0.0"
 FLASK_PORT = 5000
 FLASK_DEBUG = True
 SECRET_KEY = os.environ.get("SECRET_KEY", "mcdonalds-monitor-secret-key-change-me")
+# 立即執行功能已轉由排程全權處理
 APP_URL = os.environ.get("APP_URL", "http://127.0.0.1:5000")
+GITHUB_PAGES_URL = os.environ.get("GITHUB_PAGES_URL", "https://dearlyyc.github.io/McDonald-monitor-Project/")
 

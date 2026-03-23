@@ -8,8 +8,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import config
 import database
 from collectors import (
-    GoogleNewsCollector, FacebookCollector, InstagramCollector,
-    GoogleReviewsCollector, TavilySearchCollector, DDGSearchCollector,
+    GoogleNewsCollector, TavilySearchCollector, DDGSearchCollector,
 )
 from analyzer import SentimentAnalyzer
 from notifier import LineNotifier, TelegramNotifier
@@ -36,30 +35,46 @@ class MonitorScheduler:
         self.is_running = False
 
     def start(self):
-        """啟動排程器 (僅保留每日早上 10:00 的主動搜尋與通知)"""
+        """啟動排程器 (執行三段階段任務：07:00 點搜集、08:00 備份、10:00 通知)"""
+        
+        # 1. 每天早上 07:00：搜集與分析文章 (不發送通知)
         self.scheduler.add_job(
             self.run_monitor_cycle,
             "cron",
-            hour=config.SCHEDULE_CRON_HOUR,
-            minute=config.SCHEDULE_CRON_MINUTE,
-            args=[True], # 觸發搜尋 + 發送消息
-            id="daily_main_cycle",
-            name=f"每日彙報與搜尋 ({config.SCHEDULE_CRON_HOUR}:00)",
-            misfire_grace_time=3600*24,
+            hour=7,
+            minute=0,
+            args=[False], # notify=False
+            id="daily_crawl_analyze",
+            name="每日 07:00 搜集與分析任務",
+            misfire_grace_time=3600,
             coalesce=True
         )
-        # 新增備份任務：每日下午 2:00 (14:00) 備份到 GitHub
+
+        # 2. 每天早上 08:00：備份資料至 GitHub 及其它平台
         self.scheduler.add_job(
             self.backup_to_github,
             "cron",
-            hour=14,
+            hour=8,
             minute=0,
-            id="daily_github_backup",
-            name="每日 GitHub 備份任務 (14:00)",
-            misfire_grace_time=3600*24,
+            id="daily_backup",
+            name="每日 08:00 備份任務 (GitHub + Obsidian)",
+            misfire_grace_time=28800,
             coalesce=True
         )
-        print(f"[Scheduler] 已啟動每日 10:00 的彙報任務與 14:00 的 GitHub 備份任務")
+
+        # 3. 每天早上 10:00：發送通知訊息
+        self.scheduler.add_job(
+            self.send_daily_summary,
+            "cron",
+            hour=10,
+            minute=0,
+            id="daily_notify",
+            name="每日 10:00 快訊通知任務",
+            misfire_grace_time=28800,
+            coalesce=True
+        )
+
+        print(f"[Scheduler] 三段式任務已啟動：07:00 分析、08:00 備份、10:00 通知")
         self.scheduler.start()
 
     def backup_to_github(self):

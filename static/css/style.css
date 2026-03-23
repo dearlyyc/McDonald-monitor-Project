@@ -1,63 +1,48 @@
 /* =============================================================================
    麥當勞品牌輿情監控系統 - 暗色主題設計
    品牌色：紅色 #DA291C / 黃色 #FFC72C
-   ============================================================================= */
-
-/* --- CSS Variables --- */
+   ===================================/* --- CSS Variables --- */
 :root {
-    /* Brand Colors */
+    /* Brand Colors (Vibrant Mix) */
     --mcd-red: #DA291C;
-    --mcd-red-light: #FF4438;
     --mcd-red-dark: #A81D14;
+    --mcd-red-glow: rgba(218, 41, 28, 0.15);
     --mcd-yellow: #FFC72C;
-    --mcd-yellow-light: #FFD966;
-    --mcd-yellow-dark: #E6A800;
+    --mcd-yellow-dark: #FFB300;
+    --mcd-yellow-glow: rgba(255, 199, 44, 0.15);
 
-    /* Semantic Colors */
-    --positive: #22C55E;
-    --positive-bg: rgba(34, 197, 94, 0.12);
-    --positive-border: rgba(34, 197, 94, 0.3);
-    --negative: #EF4444;
-    --negative-bg: rgba(239, 68, 68, 0.12);
-    --negative-border: rgba(239, 68, 68, 0.3);
-    --neutral: #A78BFA;
-    --neutral-bg: rgba(167, 139, 250, 0.12);
-    --neutral-border: rgba(167, 139, 250, 0.3);
+    /* Warm, Cozy Restaurant Theme */
+    --bg-primary: #FFF9F0;   /* Creamy Warmth */
+    --bg-secondary: #FDF4E3; /* Soft Beige */
+    --bg-card: #FFFFFF;
+    --bg-accent: #FEF3C7;    /* Subtle Gold Tint */
 
-    /* Dark Theme */
-    --bg-primary: #0A0A0F;
-    --bg-secondary: #12121A;
-    --bg-card: #1A1A25;
-    --bg-card-hover: #22222F;
-    --bg-elevated: #252535;
+    /* Spacing & Layout */
+    --max-width: 1600px;
+    --header-height: 72px;
 
-    /* Text */
-    --text-primary: #F0F0F5;
-    --text-secondary: #9898AA;
-    --text-muted: #65657A;
+    /* Text (Warmer, Richer Contrast) */
+    --text-primary: #2D2424;   /* Deep Dark Brownish-Red Tone */
+    --text-secondary: #574F4D;
+    --text-muted: #8E8A86;
 
-    /* Borders */
-    --border-color: rgba(255, 255, 255, 0.06);
-    --border-hover: rgba(255, 255, 255, 0.12);
+    /* Semantic */
+    --positive: #059669;
+    --negative: #DC2626;
+    --neutral: #7C3AED;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-    --shadow-glow-red: 0 0 30px rgba(218, 41, 28, 0.15);
-    --shadow-glow-yellow: 0 0 30px rgba(255, 199, 44, 0.15);
+    /* Spacing & Radius (Bento Style) */
+    --radius-lg: 24px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
+    --space-md: 20px;
 
-    /* Layout */
-    --header-height: 70px;
-    --max-width: 1320px;
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
-
+    /* Shadows (Deeper, Warmer) */
+    --shadow-soft: 0 10px 30px -10px rgba(45, 36, 36, 0.08);
+    --shadow-hover: 0 20px 40px -15px rgba(218, 41, 28, 0.12);
+    
     /* Transitions */
-    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-    --transition: 0.25s var(--ease-out);
+    --transition: 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* --- Reset & Base --- */
@@ -76,9 +61,12 @@ html {
 }
 
 body {
-    font-family: 'Noto Sans TC', 'Inter', -apple-system, BlinkMacSystemFont,
+    font-family: 'Karla', 'Noto Sans TC', -apple-system, BlinkMacSystemFont,
                  'Segoe UI', sans-serif;
-    background: var(--bg-primary);
+    background: 
+        linear-gradient(rgba(255, 249, 240, 0.93), rgba(255, 249, 240, 0.93)),
+        url('/static/img/mcd-bg.jpg') no-repeat center center fixed;
+    background-size: cover;
     color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
@@ -91,15 +79,31 @@ body::before {
     top: 0;
     left: 0;
     right: 0;
-    height: 500px;
-    background: radial-gradient(
-        ellipse 80% 60% at 50% -10%,
-        rgba(218, 41, 28, 0.08) 0%,
-        rgba(255, 199, 44, 0.04) 40%,
-        transparent 70%
-    );
+    height: 100vh;
+    background: 
+        radial-gradient(circle at 5% 5%, rgba(255, 199, 44, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 95% 95%, rgba(218, 41, 28, 0.08) 0%, transparent 50%),
+        linear-gradient(180deg, rgba(253, 244, 227, 0.5) 0%, transparent 100%);
     pointer-events: none;
     z-index: 0;
+}
+
+/* 頂部裝飾條 (Red Ribbon) */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: var(--mcd-red);
+    z-index: 1000;
+}
+
+@keyframes floating {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    33% { transform: translate(10px, -20px) rotate(5deg); }
+    66% { transform: translate(-10px, 15px) rotate(-5deg); }
 }
 
 /* --- Header --- */
@@ -107,9 +111,10 @@ body::before {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(10, 10, 15, 0.85);
-    backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px) saturate(160%);
+    border-bottom: 4px solid var(--mcd-yellow);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
     height: var(--header-height);
 }
 
@@ -129,21 +134,36 @@ body::before {
     gap: 14px;
 }
 
-.logo-icon {
-    font-size: 32px;
-    filter: drop-shadow(0 0 8px rgba(255, 199, 44, 0.3));
-    animation: float 3s ease-in-out infinite;
-}
-
 @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
+    50% { transform: translateY(-6px); }
+}
+
+/* Logo Container (Fries replaced M) */
+.mccoin {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 2px 4px rgba(168, 29, 20, 0.2));
+    animation: float 2.5s ease-in-out infinite;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.logo-mccoin {
+    width: 50px;
+    height: 50px;
+    font-size: 28px;
+    border-width: 4px;
 }
 
 .logo h1 {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--mcd-yellow), var(--mcd-red-light));
+    font-family: 'Playfair Display SC', serif;
+    background: linear-gradient(135deg, var(--mcd-yellow-dark), var(--mcd-red));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -152,10 +172,11 @@ body::before {
 
 .logo-subtitle {
     font-size: 11px;
+    font-family: 'Karla', sans-serif;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 2px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .header-actions {
@@ -174,6 +195,11 @@ body::before {
     border-radius: 100px;
     font-size: 13px;
     color: var(--positive);
+}
+
+/* --- Background Decorations --- */
+.decor-element {
+    display: none; /* Hidden as per user request to reduce blank space */
 }
 
 .status-dot {
@@ -207,13 +233,16 @@ body::before {
 
 .btn-primary {
     background: linear-gradient(135deg, var(--mcd-red), var(--mcd-red-dark));
-    color: white;
-    box-shadow: 0 2px 12px rgba(218, 41, 28, 0.3);
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 14px rgba(218, 41, 28, 0.25);
+    border-radius: 100px;
+    padding: 12px 28px;
+    border: none;
 }
 
 .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(218, 41, 28, 0.45);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(218, 41, 28, 0.4);
 }
 
 .btn-primary:active {
@@ -241,42 +270,124 @@ body::before {
     font-size: 16px;
 }
 
+/* --- AI Insight Panel --- */
+.ai-insight-panel {
+    margin-bottom: 8px;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.insight-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px; /* Reduced from 20px */
+}
+
+.insight-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 18px 20px; /* Reduced padding */
+    border: 1px solid #FDF4E3;
+    box-shadow: var(--shadow-soft);
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+    min-height: 120px; /* Slightly shorter */
+    display: flex;
+    flex-direction: column;
+}
+
+.insight-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--mcd-yellow);
+}
+
+.insight-header {
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.insight-tag {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 100px;
+}
+
+.insight-positive .insight-tag { background: rgba(5, 150, 105, 0.1); color: var(--positive); border: 1px solid rgba(5, 150, 105, 0.2); }
+.insight-negative .insight-tag { background: rgba(220, 38, 38, 0.1); color: var(--negative); border: 1px solid rgba(220, 38, 38, 0.2); }
+.insight-neutral .insight-tag { background: rgba(124, 58, 237, 0.1); color: var(--neutral); border: 1px solid rgba(124, 58, 237, 0.2); }
+
+.insight-card p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* --- Main Content --- */
 .main-content {
     position: relative;
     z-index: 1;
     max-width: var(--max-width);
     margin: 0 auto;
-    padding: 32px 24px 60px;
+    padding: 20px 24px 60px;
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 20px; /* Reduced from 32px */
 }
 
 /* --- Stat Cards --- */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: 12px; /* Reduced from 24px */
 }
 
 .stat-card {
-    position: relative;
     background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    border: 2px solid #FDF4E3;
     border-radius: var(--radius-lg);
-    padding: 24px;
+    padding: 24px; /* Reduced from 32px */
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 16px;
-    overflow: hidden;
+    justify-content: center;
+    text-align: center;
+    gap: 12px; /* Reduced from 16px */
     transition: all var(--transition);
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(255, 199, 44, 0.1), transparent 70%);
+    opacity: 0;
+    transition: opacity var(--transition);
 }
 
 .stat-card:hover {
-    border-color: var(--border-hover);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--mcd-yellow);
+}
+
+.stat-card:hover::after {
+    opacity: 1;
 }
 
 .stat-icon {
@@ -301,10 +412,10 @@ body::before {
 }
 
 .stat-value {
-    font-size: 32px;
-    font-weight: 800;
+    font-size: 36px;
+    font-weight: 700;
     line-height: 1.1;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Playfair Display SC', serif;
 }
 
 .stat-total .stat-value {
@@ -378,39 +489,41 @@ body::before {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    padding: 24px;
+    padding: 16px; /* Reduced padding from 24px */
     transition: all var(--transition);
+    box-shadow: var(--shadow-sm);
 }
 
 .chart-card:hover {
-    border-color: var(--border-hover);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--mcd-yellow);
 }
 
 .chart-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 12px; /* Reduced from 20px */
 }
 
 .chart-header h2 {
-    font-size: 16px;
+    font-size: 14px; /* Slightly smaller h2 */
     font-weight: 600;
     color: var(--text-primary);
 }
 
 .chart-controls {
     display: flex;
-    gap: 6px;
+    gap: 4px;
 }
 
 .chip {
-    padding: 5px 14px;
+    padding: 4px 10px; /* More compact chips */
     border: 1px solid var(--border-color);
     border-radius: 100px;
     background: transparent;
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 11px;
     font-family: inherit;
     font-weight: 500;
     cursor: pointer;
@@ -430,11 +543,11 @@ body::before {
 
 .chart-container {
     position: relative;
-    height: 280px;
+    height: 200px; /* Reduced from 280px */
 }
 
 .chart-pie-container {
-    height: 260px;
+    height: 180px; /* Reduced from 260px */
 }
 
 /* --- Section Headers --- */
@@ -446,8 +559,9 @@ body::before {
 }
 
 .section-header h2 {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
+    font-family: 'Playfair Display SC', serif;
 }
 
 /* --- Filters --- */
@@ -495,18 +609,19 @@ body::before {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 20px 24px;
+    padding: 24px;
     display: flex;
     align-items: flex-start;
-    gap: 16px;
+    gap: 20px;
     transition: all var(--transition);
     cursor: default;
+    box-shadow: var(--shadow-sm);
 }
 
 .article-card:hover {
-    border-color: var(--border-hover);
-    background: var(--bg-card-hover);
-    transform: translateX(4px);
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--mcd-yellow);
 }
 
 .article-sentiment {
@@ -563,6 +678,7 @@ body::before {
     margin-bottom: 10px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -586,19 +702,19 @@ body::before {
 }
 
 .article-tag.positive {
-    background: var(--positive-bg);
-    color: var(--positive);
-    border: 1px solid var(--positive-border);
+    background: rgba(34, 197, 94, 0.1);
+    color: #166534;
+    border: 1px solid rgba(34, 197, 94, 0.2);
 }
 .article-tag.negative {
-    background: var(--negative-bg);
-    color: var(--negative);
-    border: 1px solid var(--negative-border);
+    background: rgba(239, 68, 68, 0.1);
+    color: #991B1B;
+    border: 1px solid rgba(239, 68, 68, 0.2);
 }
 .article-tag.neutral {
-    background: var(--neutral-bg);
-    color: var(--neutral);
-    border: 1px solid var(--neutral-border);
+    background: rgba(139, 92, 246, 0.1);
+    color: #5B21B6;
+    border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
 .article-reason {

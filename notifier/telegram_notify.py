@@ -4,6 +4,7 @@ Telegram Bot 通知模組
 """
 import requests
 from datetime import datetime
+from typing import Optional, List, Dict
 
 import config
 
@@ -57,10 +58,10 @@ class TelegramNotifier:
             print(f"[Telegram] 通知發送錯誤: {e}")
             return False
 
-    def send_summary(self, stats: dict, negative_articles: list = None,
-                     positive_articles: list = None, source_stats: dict = None,
-                     trend_stats: dict = None, ai_summary: str = None,
-                     promo_articles: list = None):
+    def send_summary(self, stats: dict, negative_articles: Optional[list] = None,
+                     positive_articles: Optional[list] = None, source_stats: Optional[dict] = None,
+                     trend_stats: Optional[dict] = None, ai_summary: Optional[str] = None,
+                     promo_articles: Optional[list] = None):
         """發送完整文字版監控彙總報告"""
         msg_lines = ["🍔 *【麥當勞品牌輿情彙總】*"]
         msg_lines.append(f"📅 執行時間: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
@@ -101,6 +102,8 @@ class TelegramNotifier:
                 else:
                     msg_lines.append(f"{i}. {title}")
 
-        msg_lines.append("\n✅ 報告已完成分析並發送完畢。")
+        msg_lines.append(f"\n📑 [查看詳細輿情報告 (GitHub Pages)]({config.GITHUB_PAGES_URL})")
+        msg_lines.append(f"\n🌐 [即時監控儀表板 (本機伺服器)]({config.APP_URL})")
+        msg_lines.append("\n✅ 報告已分析完畢。")
         message = "\n".join(msg_lines)
         self.send(message, parse_mode="Markdown")

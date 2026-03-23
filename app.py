@@ -85,31 +85,20 @@ def api_logs():
     return jsonify(logs)
 
 
-@app.route("/api/run-now", methods=["POST"])
-def api_run_now():
-    """立即執行一次監控週期 (非同步)"""
-    import threading
-    if monitor_scheduler.is_running:
-        return jsonify({"status": "running", "message": "監控週期正在執行中"}), 400
-    
-    # 使用 Thread 在背景執行
-    thread = threading.Thread(target=monitor_scheduler.run_monitor_cycle)
-    thread.start()
-    
-    return jsonify({"status": "success", "message": "已在背景啟動監控週期"})
+@app.route("/api/summaries")
+def api_summaries():
+    """取得正、負、中立代表性摘要 API"""
+    result = database.get_sentiment_summaries()
+    return jsonify(result)
 
 
-@app.route("/api/run-status")
-def api_run_status():
-    """取得目前的執行狀態"""
-    return jsonify({
-        "is_running": monitor_scheduler.is_running
-    })
-
+# =============================================================================
+# 啟動伺服器
+# =============================================================================
 
 if __name__ == "__main__":
     app.run(
-        host=config.FLASK_HOST,
+        host="0.0.0.0",
         port=config.FLASK_PORT,
         debug=config.FLASK_DEBUG,
     )

@@ -197,7 +197,7 @@ def get_sentiment_stats(days: int = 7) -> dict:
         return stats
 
 
-def get_source_stats(days: int = 1) -> dict:
+def get_source_stats(days: int = 7) -> list[dict]:
     """取得平台來源統計"""
     since = (datetime.now() - timedelta(days=days)).isoformat()
     with get_db() as conn:
@@ -207,7 +207,7 @@ def get_source_stats(days: int = 1) -> dict:
             WHERE collected_at >= ?
             GROUP BY source
         """, (since,)).fetchall()
-        return {row["source"]: row["count"] for row in rows}
+        return [{"source": row["source"], "count": row["count"]} for row in rows]
 
 
 def get_trend_stats() -> dict:
@@ -296,3 +296,29 @@ def get_recent_logs(limit: int = 10) -> list[dict]:
             LIMIT ?
         """, (limit,)).fetchall()
         return [dict(row) for row in rows]
+
+
+def get_sentiment_summaries() -> dict:
+    """取得正、負、中立各一則代表性的最新摘要"""
+    with get_db() as conn:
+        res = {}
+        for sentiment in ['positive', 'negative', 'neutral']:
+            # 優先找最新且有摘要的文章
+            row = conn.execute("""
+                SELECT summary, title 
+                FROM articles 
+                WHERE sentiment = ? AND summary IS NOT NULL AND summary != ''
+                ORDER BY collected_at DESC LIMIT 1
+            """, (sentiment,)).fetchone()
+            
+            if row:
+                res[sentiment] = {
+                    "summary": row["summary"],
+                    "title": row["title"]
+                }
+            else:
+                res[sentiment] = {
+                    "summary": "目前尚無此類別的分析摘要數據。",
+                    "title": "無資料"
+                }
+        return res
