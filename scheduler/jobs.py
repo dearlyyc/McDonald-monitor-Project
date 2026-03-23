@@ -82,11 +82,16 @@ class MonitorScheduler:
             # 1. 生成今日筆記 (Markdown)
             self._generate_obsidian_report(obsidian_path)
             
-            # 2. 本地備份資料庫
-            db_file = config.DATABASE_PATH
-            if os.path.exists(db_file):
-                shutil.copy2(db_file, os.path.join(obsidian_path, "mcdonalds_monitor.db"))
-                print(f"  [OK] 本地 DB 備份完成")
+            # 2. 本地備份全專案 (讓 Obsidian 備份與 GitHub 完全一致，排除不必要的暫存檔)
+            print("  正在將全專案複製到 Obsidian 本地庫...")
+            project_root = os.path.dirname(os.path.dirname(__file__)) # 取得上一層的專案根目錄
+            shutil.copytree(
+                project_root, 
+                obsidian_path, 
+                dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns('venv', '.git', '__pycache__', 'node_modules', '*.pyc', 'launch_silent.vbs')
+            )
+            print(f"  [OK] 本地全專案備份完成")
 
             # 3. GitHub 備份
             subprocess.run(["git", "add", "."], check=True, capture_output=True)
