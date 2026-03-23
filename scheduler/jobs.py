@@ -23,9 +23,10 @@ class MonitorScheduler:
         # 初始化所有搜集器
         self.collectors = [
             GoogleNewsCollector(),
-            FacebookCollector(),
-            InstagramCollector(),
-            GoogleReviewsCollector(),
+            # 方案 B：暫時關閉會消耗 Apify 月度 $5 額度的搜集器（等待下個月額度重置後再打開）
+            # FacebookCollector(),
+            # InstagramCollector(),
+            # GoogleReviewsCollector(),
             TavilySearchCollector(),
             DDGSearchCollector(),
         ]
