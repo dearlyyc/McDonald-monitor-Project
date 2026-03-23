@@ -108,8 +108,8 @@ class MonitorScheduler:
         from datetime import datetime
         print("  正在生成 Obsidian 今日報告...")
         
-        # 建立專屬的「每日報告」子資料夾
-        report_dir = os.path.join(dest_path, "每日報告")
+        # 建立專屬的「Daily_Reports」子資料夾
+        report_dir = os.path.join(dest_path, "Daily_Reports")
         os.makedirs(report_dir, exist_ok=True)
         
         # 取得最新一筆監控記錄
@@ -119,7 +119,7 @@ class MonitorScheduler:
         
         log = logs[0]
         date_str = datetime.now().strftime("%Y-%m-%d")
-        file_name = f"麥當勞輿情報告_{date_str}.md"
+        file_name = f"McDonald_Report_{date_str}.md"
         file_path = os.path.join(report_dir, file_name)
         
         # 取得今日負面文章 (用於筆記列表)
