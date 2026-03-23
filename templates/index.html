@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="麥當勞品牌輿情監控系統 - 即時追蹤品牌聲譽與網路輿論">
+    <title>🍔 麥當勞輿情監控系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- 頂部導航 -->
+    <header class="header" id="main-header">
+        <div class="header-inner">
+            <div class="logo">
+                <span class="logo-icon">🍔</span>
+                <div>
+                    <h1>麥當勞輿情監控</h1>
+                    <span class="logo-subtitle">Brand Sentiment Monitor</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="status-indicator" id="status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">系統運行中</span>
+                </div>
+                <button class="btn btn-primary" id="btn-run-now" onclick="runNow()">
+                    <span class="btn-icon">⚡</span>
+                    立即執行
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- 統計卡片 -->
+        <section class="stats-section" id="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card stat-total" id="stat-total">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stat-total-value">—</span>
+                        <span class="stat-label">總文章數</span>
+                    </div>
+                    <div class="stat-bg-pattern"></div>
+                </div>
+                <div class="stat-card stat-positive" id="stat-positive">
+                    <div class="stat-icon">😊</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stat-positive-value">—</span>
+                        <span class="stat-label">正面評價</span>
+                    </div>
+                    <div class="stat-ring">
+                        <svg viewBox="0 0 36 36">
+                            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="ring-fill ring-positive" id="ring-positive" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-card stat-negative" id="stat-negative">
+                    <div class="stat-icon">😟</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stat-negative-value">—</span>
+                        <span class="stat-label">負面評價</span>
+                    </div>
+                    <div class="stat-ring">
+                        <svg viewBox="0 0 36 36">
+                            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="ring-fill ring-negative" id="ring-negative" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-card stat-neutral" id="stat-neutral">
+                    <div class="stat-icon">😐</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stat-neutral-value">—</span>
+                        <span class="stat-label">中立評價</span>
+                    </div>
+                    <div class="stat-ring">
+                        <svg viewBox="0 0 36 36">
+                            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="ring-fill ring-neutral" id="ring-neutral" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 圖表區域 -->
+        <section class="charts-section" id="charts-section">
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2>情感趨勢</h2>
+                        <div class="chart-controls">
+                            <button class="chip active" onclick="updateChartDays(7, this)" id="chart-7d">7 天</button>
+                            <button class="chip" onclick="updateChartDays(14, this)" id="chart-14d">14 天</button>
+                            <button class="chip" onclick="updateChartDays(30, this)" id="chart-30d">30 天</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="trend-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card chart-pie-card">
+                    <div class="chart-header">
+                        <h2>來源分佈</h2>
+                    </div>
+                    <div class="chart-container chart-pie-container">
+                        <canvas id="source-pie-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 篩選與文章列表 -->
+        <section class="articles-section" id="articles-section">
+            <div class="section-header">
+                <h2>📰 最新文章</h2>
+                <div class="filters" id="filters">
+                    <select id="filter-sentiment" onchange="loadArticles()">
+                        <option value="all">所有情感</option>
+                        <option value="positive">😊 正面</option>
+                        <option value="negative">😟 負面</option>
+                        <option value="neutral">😐 中立</option>
+                    </select>
+                    <select id="filter-source" onchange="loadArticles()">
+                        <option value="all">所有來源</option>
+                        <option value="Google News">Google News</option>
+                        <option value="PTT">PTT</option>
+                        <option value="Dcard">Dcard</option>
+                        <option value="Facebook">Facebook</option>
+                        <option value="Instagram">Instagram</option>
+                        <option value="Google Reviews">Google 評論</option>
+                        <option value="Tavily Search">Tavily Search</option>
+                        <option value="DuckDuckGo Search">DuckDuckGo Search</option>
+                    </select>
+                    <select id="filter-days" onchange="loadArticles()">
+                        <option value="7">近 7 天</option>
+                        <option value="14">近 14 天</option>
+                        <option value="30">近 30 天</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="articles-list" id="articles-list">
+                <div class="loading-placeholder">
+                    <div class="spinner"></div>
+                    <p>載入中...</p>
+                </div>
+            </div>
+
+            <div class="pagination" id="pagination"></div>
+        </section>
+
+        <!-- 執行記錄 -->
+        <section class="logs-section" id="logs-section">
+            <div class="section-header">
+                <h2>📋 執行記錄</h2>
+                <button class="btn btn-secondary" onclick="loadLogs()">重新整理</button>
+            </div>
+            <div class="logs-table-wrapper" id="logs-table-wrapper">
+                <table class="logs-table" id="logs-table">
+                    <thead>
+                        <tr>
+                            <th>執行時間</th>
+                            <th>搜集</th>
+                            <th>分析</th>
+                            <th>正面</th>
+                            <th>負面</th>
+                            <th>中立</th>
+                            <th>通知</th>
+                            <th>狀態</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-body">
+                        <tr><td colspan="8" class="empty-state">尚無執行記錄</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="footer" id="footer">
+        <p>🍔 麥當勞品牌輿情監控系統 &copy; 2026 | Powered by Flask + LLM</p>
+    </footer>
+
+    <!-- 載入通知 toast -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
