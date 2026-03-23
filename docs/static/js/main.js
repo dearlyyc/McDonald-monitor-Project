@@ -20,6 +20,7 @@ Chart.defaults.font.family = "'Inter', 'Noto Sans TC', sans-serif";
 document.addEventListener('DOMContentLoaded', () => {
     initCharts();
     loadStats();
+    loadSummaries();
     loadDailyStats(7);
     loadArticles();
     loadLogs();
@@ -27,8 +28,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // 每 60 秒自動重新整理統計
     setInterval(() => {
         loadStats();
+        loadSummaries();
     }, 60000);
 });
+
+// =============================================================================
+// AI 摘要
+// =============================================================================
+async function loadSummaries() {
+    try {
+        const resp = await fetch('/api/summaries');
+        const data = await resp.json();
+
+        document.getElementById('summary-positive').textContent = data.positive.summary;
+        document.getElementById('summary-negative').textContent = data.negative.summary;
+        document.getElementById('summary-neutral').textContent = data.neutral.summary;
+    } catch (err) {
+        console.error('載入 AI 摘要失敗:', err);
+    }
+}
 
 // =============================================================================
 // 統計資料
@@ -478,7 +496,12 @@ async function runNow() {
     btn.innerHTML = '<span class="btn-icon">⏳</span> 啟動中...';
 
     try {
-        const resp = await fetch('/api/run-now', { method: 'POST' });
+        const resp = await fetch('/api/run-now', { 
+            method: 'POST',
+            headers: {
+                'X-API-Token': typeof API_TOKEN !== 'undefined' ? API_TOKEN : ''
+            }
+        });
         const data = await resp.json();
 
         if (data.status === 'success') {
