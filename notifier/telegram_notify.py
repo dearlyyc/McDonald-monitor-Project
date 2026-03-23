@@ -3,6 +3,7 @@ Telegram Bot 通知模組
 透過 Telegram Bot API 發送輿情監控通知
 """
 import requests
+from datetime import datetime
 
 import config
 
@@ -56,48 +57,50 @@ class TelegramNotifier:
             print(f"[Telegram] 通知發送錯誤: {e}")
             return False
 
-    def send_summary(self, stats: dict, negative_articles: list[dict] = None,
-                     positive_articles: list[dict] = None, source_stats: dict = None,
+    def send_summary(self, stats: dict, negative_articles: list = None,
+                     positive_articles: list = None, source_stats: dict = None,
                      trend_stats: dict = None, ai_summary: str = None,
-                     promo_articles: list[dict] = None):
-        """發送精簡版監控摘要通知"""
-        msg_lines = ["🍔 *麥當勞輿情摘要*"]
+                     promo_articles: list = None):
+        """發送完整文字版監控彙總報告"""
+        msg_lines = ["🍔 *【麥當勞品牌輿情彙總】*"]
+        msg_lines.append(f"📅 執行時間: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
         if ai_summary:
-            msg_lines.append(f"💡 AI 總結: {ai_summary}")
+            msg_lines.append(f"\n💡 *【AI 深度洞察】*\n{ai_summary}")
 
         msg_lines.append(
-            f"📊 總數: *{stats.get('total', 0)}* | "
-            f"正: *{stats.get('positive', 0)}* | "
-            f"負: *{stats.get('negative', 0)}* | "
-            f"中: *{stats.get('neutral', 0)}*"
+            f"\n📊 *【情感統計】*\n總數: *{stats.get('total', 0)}* | "
+            f"🟢 正面: *{stats.get('positive', 0)}* | "
+            f"🔴 負面: *{stats.get('negative', 0)}* | "
+            f"⚪ 中立: *{stats.get('neutral', 0)}*"
         )
 
-        if trend_stats and (trend_stats.get('diff_negative', 0) != 0 or trend_stats.get('diff_positive', 0) != 0):
+        if trend_stats:
             dn = trend_stats.get('diff_negative', 0)
             dp = trend_stats.get('diff_positive', 0)
-            msg_lines.append(f"📈 趨勢: 負 {'+' if dn >= 0 else ''}{dn} | 正 {'+' if dp >= 0 else ''}{dp}")
+            if dn != 0 or dp != 0:
+                msg_lines.append(f"📈 趨勢對比: 負面 {'+' if dn >= 0 else ''}{dn} | 正面 {'+' if dp >= 0 else ''}{dp}")
 
         if promo_articles:
-            msg_lines.append("\n🎁 *最新活動：*")
-            for i, article in enumerate(promo_articles[:3], 1):
-                title = article.get("title", "無標題")[:30]
-                url = article.get("url", "")
-                if url:
-                    msg_lines.append(f"• [{title}]({url})")
-                else:
-                    msg_lines.append(f"• {title}")
-
-        if negative_articles:
-            msg_lines.append("\n⚠️ *負面重點：*")
-            for i, article in enumerate(negative_articles[:3], 1):
-                title = article.get("title", "無標題")[:30]
+            msg_lines.append("\n🎁 *【最新活動與推廣】*")
+            for i, article in enumerate(promo_articles[:5], 1):
+                title = article.get("title", "無標題")[:50]
                 url = article.get("url", "")
                 if url:
                     msg_lines.append(f"{i}. [{title}]({url})")
                 else:
                     msg_lines.append(f"{i}. {title}")
 
-        msg_lines.append(f"\n🔗 [詳細報告]({config.APP_URL})")
+        if negative_articles:
+            msg_lines.append("\n⚠️ *【負面輿情追蹤】*")
+            for i, article in enumerate(negative_articles[:5], 1):
+                title = article.get("title", "無標題")[:50]
+                url = article.get("url", "")
+                if url:
+                    msg_lines.append(f"{i}. [{title}]({url})")
+                else:
+                    msg_lines.append(f"{i}. {title}")
+
+        msg_lines.append("\n✅ 報告已完成分析並發送完畢。")
         message = "\n".join(msg_lines)
-        self.send(message)
+        self.send(message, parse_mode="Markdown")

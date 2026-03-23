@@ -17,12 +17,6 @@ SEARCH_KEYWORDS = ["麥當勞", "McDonald's", "McDonalds", "麥當勞 活動", "
 GOOGLE_NEWS_LANG = "zh-TW"
 GOOGLE_NEWS_REGION = "TW"
 
-# PTT 看板
-PTT_BOARDS = ["Gossiping", "fastfood", "Lifeismoney"]
-
-# Dcard 看板
-DCARD_FORUMS = ["food", "trending", "funny"]
-
 # Facebook 粉絲頁（搜集公開貼文）
 FACEBOOK_PAGES = ["McDonalds", "McDonaldsTaiwan"]
 

@@ -29,7 +29,7 @@ ENV/
 .env
 
 # Database
-*.db
+# *.db (我們需要追蹤此檔案以進行 GitHub 備份)
 *.sqlite3
 
 # Logs
