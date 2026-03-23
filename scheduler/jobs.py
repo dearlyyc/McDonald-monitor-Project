@@ -103,8 +103,15 @@ class MonitorScheduler:
             print(f"  [Fail] 備份任務中斷: {e}")
 
     def _generate_obsidian_report(self, dest_path):
-        """自動生成 Obsidian 格式的輿情報告"""
+        """自動生成 Obsidian 格式的輿情報告，並存入專屬的報告資料夾"""
+        import os
+        from datetime import datetime
         print("  正在生成 Obsidian 今日報告...")
+        
+        # 建立專屬的「每日報告」子資料夾
+        report_dir = os.path.join(dest_path, "每日報告")
+        os.makedirs(report_dir, exist_ok=True)
+        
         # 取得最新一筆監控記錄
         logs = database.get_recent_logs(limit=1)
         if not logs:
@@ -113,7 +120,7 @@ class MonitorScheduler:
         log = logs[0]
         date_str = datetime.now().strftime("%Y-%m-%d")
         file_name = f"麥當勞輿情報告_{date_str}.md"
-        file_path = os.path.join(dest_path, file_name)
+        file_path = os.path.join(report_dir, file_name)
         
         # 取得今日負面文章 (用於筆記列表)
         from datetime import date
