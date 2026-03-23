@@ -153,7 +153,7 @@ class SentimentAnalyzer:
         genai.configure(api_key=config.GEMINI_API_KEY)
         
         # 嘗試模型列表 (按照優先順序)
-        models_to_try = [config.GEMINI_MODEL, "gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-2.0-flash"]
+        models_to_try = [config.GEMINI_MODEL, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
         last_error = None
         
         for model_name in models_to_try:

@@ -8,52 +8,60 @@ import config
 
 
 class LineNotifier:
-    """Line Notify 通知發送器"""
+    """LINE Messaging API 通知發送器 (取代已停用的 Notify)"""
 
-    NOTIFY_URL = "https://notify-api.line.me/api/notify"
+    PUSH_URL = "https://api.line.me/v2/bot/message/push"
 
     def __init__(self):
-        self.token = config.LINE_NOTIFY_TOKEN
+        self.token = config.LINE_CHANNEL_ACCESS_TOKEN
+        self.user_id = config.LINE_USER_ID
 
     @property
     def is_configured(self) -> bool:
-        """檢查是否已設定 Token"""
-        return bool(self.token)
+        """檢查是否已設定傳訊所需的 Token 與 ID"""
+        return bool(self.token) and bool(self.user_id)
 
     def send(self, message: str) -> bool:
         """
-        發送 Line Notify 通知。
+        發送 LINE Messaging API 推播通知。
 
         Args:
-            message: 通知訊息（上限 1000 字）
-
-        Returns:
-            是否發送成功
+            message: 通知訊息
         """
         if not self.is_configured:
-            print("[Line] 未設定 LINE_NOTIFY_TOKEN，跳過通知")
+            print("[LINE] 未完整設定 LINE_CHANNEL_ACCESS_TOKEN 或 USER_ID，跳過")
             return False
 
         headers = {
             "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
+        }
+
+        payload = {
+            "to": self.user_id,
+            "messages": [
+                {
+                    "type": "text",
+                    "text": message[:5000] # Messaging API 上限更高
+                }
+            ]
         }
 
         try:
             resp = requests.post(
-                self.NOTIFY_URL,
+                self.PUSH_URL,
                 headers=headers,
-                data={"message": message[:1000]},
+                json=payload,
                 timeout=10,
             )
             if resp.status_code == 200:
-                print("[Line] 通知發送成功")
+                print("[LINE] 通知發送成功")
                 return True
             else:
-                print(f"[Line] 通知發送失敗: {resp.status_code} {resp.text}")
+                print(f"[LINE] 通知發送失敗: {resp.status_code} {resp.text}")
                 return False
         except requests.RequestException as e:
-            print(f"[Line] 通知發送錯誤: {e}")
+            print(f"[LINE] 通知發送錯誤: {e}")
             return False
 
     def send_summary(self, stats: dict, negative_articles: list[dict] = None,

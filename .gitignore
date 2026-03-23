@@ -40,3 +40,13 @@ tunnel_log.txt
 .vscode/
 .idea/
 .gemini/
+.agents/
+
+# Temporary Diagnostic/Test scripts
+check_*.py
+test_*.py
+verify_*.py
+reset_*.py
+find_*.py
+*.txt
+*.log
