@@ -34,6 +34,8 @@ class MonitorScheduler:
         self.telegram_notifier = TelegramNotifier()
         self.is_running = False
 
+    def start(self):
+        """啟動排程器 (僅保留每日早上 10:00 的主動搜尋與通知)"""
         self.scheduler.add_job(
             self.run_monitor_cycle,
             "cron",
@@ -57,7 +59,6 @@ class MonitorScheduler:
             coalesce=True
         )
         print(f"[Scheduler] 已啟動每日 10:00 的彙報任務與 14:00 的 GitHub 備份任務")
-
         self.scheduler.start()
 
     def backup_to_github(self):
@@ -69,6 +70,14 @@ class MonitorScheduler:
             os.makedirs(obsidian_path, exist_ok=True)
 
         try:
+            # 0. 產生 GitHub Pages 靜態網頁 (.html)
+            print("  正在匯出 GitHub Pages 靜態快照...")
+            try:
+                from export_html import export_to_github_pages
+                export_to_github_pages()
+            except Exception as e:
+                print(f"  [Fail] 靜態頁面匯出失敗: {e}")
+
             # 1. 生成今日筆記 (Markdown)
             self._generate_obsidian_report(obsidian_path)
             
@@ -76,16 +85,16 @@ class MonitorScheduler:
             db_file = config.DATABASE_PATH
             if os.path.exists(db_file):
                 shutil.copy2(db_file, os.path.join(obsidian_path, "mcdonalds_monitor.db"))
-                print(f"  ✓ 本地 DB 備份完成")
+                print(f"  [OK] 本地 DB 備份完成")
 
             # 3. GitHub 備份
             subprocess.run(["git", "add", "."], check=True, capture_output=True)
             commit_msg = f"每日自動備份: {datetime.now().strftime('%Y-%m-%d')}"
             subprocess.run(["git", "commit", "-m", commit_msg], check=False, capture_output=True)
             subprocess.run(["git", "push"], check=True, capture_output=True)
-            print("  ✓ GitHub 備份成功！")
+            print("  [OK] GitHub 備份成功！")
         except Exception as e:
-            print(f"  ✗ 備份任務中斷: {e}")
+            print(f"  [Fail] 備份任務中斷: {e}")
 
     def _generate_obsidian_report(self, dest_path):
         """自動生成 Obsidian 格式的輿情報告"""
@@ -127,7 +136,7 @@ class MonitorScheduler:
         
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
-        print(f"  ✓ 報告已存至 Obsidian: {file_name}")
+        print(f"  [OK] 報告已存至 Obsidian: {file_name}")
 
     def stop(self):
         """停止排程器"""
@@ -169,14 +178,14 @@ class MonitorScheduler:
                     items = collector.collect()
                     all_articles.extend(items)
                 except Exception as e:
-                    print(f"  ✗ {collector.name} 搜集失敗: {e}")
+                    print(f"  [Fail] {collector.name} 搜集失敗: {e}")
 
             new_count = 0
             for article in all_articles:
                 if database.insert_article(article):
                     new_count += 1
             log["total_collected"] = new_count
-            print(f"  ✓ 新增 {new_count} 篇文章")
+            print(f"  [OK] 新增 {new_count} 篇文章")
 
             # Step 3: 情感分析 (限制最新 40 篇以提昇速度)
             print("\n[Step 3] 情感分析...")
@@ -199,8 +208,8 @@ class MonitorScheduler:
                     log[f"{result['sentiment']}_count"] += 1
                     analyzed_count += 1
                 log["total_analyzed"] = analyzed_count
-                print(f"  ✓ 完成 {analyzed_count} 篇文章分析")
-                print(f"  ✓ 成功分析了 {analyzed_count} 篇文章")
+                print(f"  [OK] 完成 {analyzed_count} 篇文章分析")
+                print(f"  [OK] 成功分析了 {analyzed_count} 篇文章")
 
             # Step 4: 指令要求發送通知時才發送
             if notify:
@@ -270,6 +279,6 @@ class MonitorScheduler:
                     promo_articles=promo_articles[:3]
                 )
                 count += 1
-            print(f"  ✓ 彙報通知已發送到 {count} 個平台")
+            print(f"  [OK] 彙報通知已發送到 {count} 個平台")
         except Exception as e:
-            print(f"  ✗ 彙報通知發送失敗: {e}")
+            print(f"  [Fail] 彙報通知發送失敗: {e}")

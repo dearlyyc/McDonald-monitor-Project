@@ -101,9 +101,10 @@ class SentimentAnalyzer:
 
             prompt = BATCH_PROMPT.format(articles_text=articles_text)
             
-            # 重試機制
+            # 指數退避重試機制 (Exponential Backoff)
             response_text = None
-            for attempt in range(2):
+            max_retries = 4
+            for attempt in range(max_retries):
                 try:
                     if self.provider == "gemini":
                         response_text = self._call_gemini(prompt)
@@ -111,11 +112,14 @@ class SentimentAnalyzer:
                         response_text = self._call_openai(prompt)
                     break
                 except Exception as e:
-                    if "429" in str(e):
-                        print(f"    ⚠️ 觸發頻率限制，等待 30 秒後重試... ({attempt+1})")
-                        time.sleep(30)
+                    error_msg = str(e)
+                    if "429" in error_msg or "ResourceExhausted" in error_msg or "Quota" in error_msg:
+                        wait_time = 20 * (2 ** attempt)  # 20秒, 40秒, 80秒...
+                        print(f"    ⚠️ 觸發 API 頻率限制 (Rate Limit)，等待 {wait_time} 秒後重試... ({attempt+1}/{max_retries})")
+                        time.sleep(wait_time)
                     else:
-                        print(f"    ✗ 批量呼叫失敗: {e}")
+                        print(f"    [Fail] 批量呼叫發生未預期錯誤: {e}")
+                        break
             
             if response_text:
                 try:
@@ -125,9 +129,11 @@ class SentimentAnalyzer:
                         res["article_id"] = res.get("id")
                         results.append(res)
                 except Exception as e:
-                    print(f"    ✗ 解析批量結果失敗: {e}")
+                    print(f"    [Fail] 解析批量結果失敗: {e}")
             
-            time.sleep(5) # 批量後間隔 5 秒
+            # 任務間插入更強的靜態冷卻時間避免連續觸發限制
+            print(f"    ↳ 此批次完成，進入 10 秒冷卻...")
+            time.sleep(10) 
 
         return results
 
