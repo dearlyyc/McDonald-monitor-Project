@@ -42,6 +42,7 @@ tunnel_log.txt
 .gemini/
 .agent/
 .agents/
+skills/
 .DS_Store
 Thumbs.db
 
