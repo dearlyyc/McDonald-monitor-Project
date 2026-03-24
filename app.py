@@ -14,10 +14,13 @@ app.secret_key = config.SECRET_KEY
 # 初始化資料庫
 database.init_db()
 
-# 初始化排程器
+import os
+
+# 初始化排程器（避免在 Flask Debug 模式下重複啟動）
 monitor_scheduler = MonitorScheduler()
-monitor_scheduler.start()
-atexit.register(monitor_scheduler.stop)
+if not config.FLASK_DEBUG or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    monitor_scheduler.start()
+    atexit.register(monitor_scheduler.stop)
 
 
 # =============================================================================

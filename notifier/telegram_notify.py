@@ -59,7 +59,7 @@ class TelegramNotifier:
             return False
 
     def send_summary(self, stats: dict, negative_articles: Optional[list] = None,
-                     positive_articles: Optional[list] = None, source_stats: Optional[dict] = None,
+                     positive_articles: Optional[list] = None, source_stats: Optional[list] = None,
                      trend_stats: Optional[dict] = None, ai_summary: Optional[str] = None,
                      promo_articles: Optional[list] = None):
         """發送完整文字版監控彙總報告"""
@@ -75,6 +75,10 @@ class TelegramNotifier:
             f"🔴 負面: *{stats.get('negative', 0)}* | "
             f"⚪ 中立: *{stats.get('neutral', 0)}*"
         )
+
+        if source_stats:
+            ss_text = " | ".join([f"{s['source']}: {s['count']}" for s in source_stats[:5]])
+            msg_lines.append(f"📡 來源分佈: {ss_text}")
 
         if trend_stats:
             dn = trend_stats.get('diff_negative', 0)

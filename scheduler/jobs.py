@@ -215,11 +215,11 @@ class MonitorScheduler:
             log["total_collected"] = new_count
             print(f"  [OK] 新增 {new_count} 篇文章")
 
-            # Step 3: 情感分析 (限制最新 40 篇以提昇速度)
+            # Step 3: 情感分析 (提高至 100 篇以處理當日所有積壓新聞)
             print("\n[Step 3] 情感分析...")
-            unanalyzed = database.get_unanalyzed_articles(limit=40)
+            unanalyzed = database.get_unanalyzed_articles(limit=100)
             if unanalyzed:
-                print(f"  正在分析最新 {len(unanalyzed)} 篇輿情...")
+                print(f"  正在分析最新 {len(unanalyzed)} 篇輿情資料...")
                 # 批量呼叫並即時存檔
                 results = self.analyzer.analyze_batch(unanalyzed)
                 analyzed_count = 0
@@ -237,7 +237,6 @@ class MonitorScheduler:
                     analyzed_count += 1
                 log["total_analyzed"] = analyzed_count
                 print(f"  [OK] 完成 {analyzed_count} 篇文章分析")
-                print(f"  [OK] 成功分析了 {analyzed_count} 篇文章")
 
             # Step 4: 指令要求發送通知時才發送
             if notify:
@@ -246,7 +245,8 @@ class MonitorScheduler:
         except Exception as e:
             log["status"] = "error"
             log["error_message"] = str(e)[:500]
-            print(f"\n[Monitor] 監控週期發生錯誤: {e}")
+            # 使用 repr(e) 輸出以避免 Windows 控制台 CP950 編碼錯誤 (如 \u2713)
+            print(f"\n[Monitor] 監控週期發生錯誤: {repr(e)}")
         finally:
             database.insert_monitor_log(log)
             self.is_running = False

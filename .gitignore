@@ -36,11 +36,14 @@ ENV/
 *.log
 tunnel_log.txt
 
-# IDE
+# IDE & System Tools
 .vscode/
 .idea/
 .gemini/
+.agent/
 .agents/
+.DS_Store
+Thumbs.db
 
 # Temporary Diagnostic/Test scripts
 check_*.py

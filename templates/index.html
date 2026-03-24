@@ -242,5 +242,26 @@
     <div class="toast-container" id="toast-container"></div>
 
     <script src="/static/js/main.js"></script>
+
+    <!-- 詳細報表彈窗 -->
+    <div id="detail-modal" class="modal">
+        <div class="modal-overlay" onclick="closeModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">詳細報表</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- 動態插入內容 -->
+                <div class="loading-placeholder">
+                    <div class="spinner"></div>
+                    <p>正在生成明細...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">關閉</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

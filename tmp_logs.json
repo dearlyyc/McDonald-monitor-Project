@@ -1,0 +1,74 @@
+[
+  {
+    "id": 6,
+    "run_at": "2026-03-24T07:35:08.584592",
+    "total_collected": 8,
+    "total_analyzed": 14,
+    "positive_count": 10,
+    "negative_count": 1,
+    "neutral_count": 3,
+    "notification_sent": 0,
+    "status": "success",
+    "error_message": ""
+  },
+  {
+    "id": 5,
+    "run_at": "2026-03-24T07:33:06.221131",
+    "total_collected": 19,
+    "total_analyzed": 10,
+    "positive_count": 8,
+    "negative_count": 1,
+    "neutral_count": 1,
+    "notification_sent": 0,
+    "status": "success",
+    "error_message": ""
+  },
+  {
+    "id": 4,
+    "run_at": "2026-03-23T16:51:29.538797",
+    "total_collected": 37,
+    "total_analyzed": 10,
+    "positive_count": 9,
+    "negative_count": 0,
+    "neutral_count": 1,
+    "notification_sent": 0,
+    "status": "success",
+    "error_message": ""
+  },
+  {
+    "id": 3,
+    "run_at": "2026-03-23T15:09:10.739499",
+    "total_collected": 12,
+    "total_analyzed": 0,
+    "positive_count": 0,
+    "negative_count": 0,
+    "neutral_count": 0,
+    "notification_sent": 0,
+    "status": "success",
+    "error_message": ""
+  },
+  {
+    "id": 2,
+    "run_at": "2026-03-23T14:33:02.433942",
+    "total_collected": 25,
+    "total_analyzed": 0,
+    "positive_count": 0,
+    "negative_count": 0,
+    "neutral_count": 0,
+    "notification_sent": 0,
+    "status": "error",
+    "error_message": "'cp950' codec can't encode character '\\u2713' in position 2: illegal multibyte sequence"
+  },
+  {
+    "id": 1,
+    "run_at": "2026-03-23T13:49:26.613903",
+    "total_collected": 2,
+    "total_analyzed": 0,
+    "positive_count": 0,
+    "negative_count": 0,
+    "neutral_count": 0,
+    "notification_sent": 0,
+    "status": "success",
+    "error_message": ""
+  }
+]
