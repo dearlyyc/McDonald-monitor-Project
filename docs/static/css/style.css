@@ -598,6 +598,48 @@ body::after {
     box-shadow: 0 0 0 3px rgba(255, 199, 44, 0.1);
 }
 
+.search-box {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    transition: all var(--transition);
+    overflow: hidden;
+}
+
+.search-box:focus-within {
+    border-color: var(--mcd-yellow);
+    box-shadow: 0 0 0 3px rgba(255, 199, 44, 0.1);
+}
+
+.search-box input {
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 13px;
+    width: 220px;
+}
+
+.search-box .search-btn {
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    border-left: 1px solid var(--border-color);
+}
+
+.search-box .search-btn:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
 /* --- Article Cards --- */
 .articles-list {
     display: flex;
@@ -991,4 +1033,99 @@ body::after {
     .btn-primary span:last-child {
         display: none;
     }
+}
+/* --- Modal System (Premium Aesthetics) --- */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    display: none; /* 預設隱藏 */
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.active {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(45, 36, 36, 0.4);
+    backdrop-filter: blur(8px);
+}
+
+.modal-content {
+    position: relative;
+    width: 90%;
+    max-width: 900px;
+    max-height: 85vh;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(20px);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid #FDF4E3;
+    z-index: 2001;
+}
+
+.modal.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.modal-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.modal-close:hover { color: var(--mcd-red); }
+
+.modal-body {
+    padding: 28px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-footer {
+    padding: 16px 28px;
+    border-top: 1px solid #F3F4F6;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* 讓統計卡片看起來可點擊 */
+.stat-card, .insight-card {
+    cursor: pointer;
+    user-select: none;
+}
+
+.stat-card:active, .insight-card:active {
+    transform: scale(0.98);
 }

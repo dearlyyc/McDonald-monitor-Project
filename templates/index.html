@@ -170,6 +170,10 @@
             <div class="section-header">
                 <h2>📰 最新文章</h2>
                 <div class="filters" id="filters">
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="🔍 搜尋文章標題或內容..." onkeyup="if(event.key === 'Enter') loadArticles()">
+                        <button onclick="loadArticles()" class="search-btn">搜尋</button>
+                    </div>
                     <select id="filter-sentiment" onchange="loadArticles()">
                         <option value="all">所有情感</option>
                         <option value="positive">😊 正面</option>
@@ -188,9 +192,9 @@
                         <option value="DuckDuckGo Search">DuckDuckGo Search</option>
                     </select>
                     <select id="filter-days" onchange="loadArticles()">
-                        <option value="7">近 7 天</option>
-                        <option value="14">近 14 天</option>
-                        <option value="30">近 30 天</option>
+                        <option value="1">今日</option>
+                        <option value="yesterday">昨日</option>
+                        <option value="7" selected>近 7 天</option>
                     </select>
                 </div>
             </div>

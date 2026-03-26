@@ -80,7 +80,7 @@ async function openModal(type) {
             
             const [summaryResp, articleResp] = await Promise.all([
                 fetch('/api/summaries'),
-                fetch(`/api/articles?sentiment=${fullSentiment}&per_page=10`)
+                fetch(`/api/articles?sentiment=${fullSentiment}&days=1&per_page=10`)
             ]);
             const summaryData = await summaryResp.json();
             const articleData = await articleResp.json();
@@ -103,12 +103,12 @@ async function openModal(type) {
             `;
         } else {
             // 文章清單版
-            const resp = await fetch(`/api/articles?sentiment=${sentiment}&per_page=100`);
+            const resp = await fetch(`/api/articles?sentiment=${sentiment}&days=1&per_page=100`);
             const data = await resp.json();
             
             bodyEl.innerHTML = `
                 <div class="modal-list-stats" style="margin-bottom: 24px; padding: 12px 20px; background: var(--bg-secondary); border-radius: 8px; color: var(--text-secondary); font-weight: 500;">
-                    📊 目前系統共搜集到 ${data.total} 篇相關文章 (此處預覽最後 100 篇)
+                    📊 今日已分析共搜集到 ${data.total} 篇相關文章 (此處預覽最後 100 篇)
                 </div>
                 <div class="articles-list">
                     ${data.articles.map(a => renderArticleCard(a)).join('')}
@@ -150,7 +150,7 @@ async function loadSummaries() {
 // =============================================================================
 async function loadStats() {
     try {
-        const resp = await fetch('/api/stats?days=7');
+        const resp = await fetch('/api/stats?days=1');
         const stats = await resp.json();
 
         animateValue('stat-total-value', stats.total || 0);
@@ -173,7 +173,7 @@ async function loadStats() {
 
 async function loadSourceStats() {
     try {
-        const resp = await fetch('/api/source-stats?days=7');
+        const resp = await fetch('/api/source-stats?days=1');
         const stats = await resp.json();
 
         if (sourcePieChart) {
@@ -419,6 +419,7 @@ async function loadArticles(page = 1) {
     const sentiment = document.getElementById('filter-sentiment').value;
     const source = document.getElementById('filter-source').value;
     const days = document.getElementById('filter-days').value;
+    const query = document.getElementById('search-input')?.value || "";
 
     const listEl = document.getElementById('articles-list');
     listEl.innerHTML = `
@@ -430,7 +431,7 @@ async function loadArticles(page = 1) {
 
     try {
         const params = new URLSearchParams({
-            sentiment, source, days, page, per_page: 20,
+            sentiment, source, days, page, per_page: 20, query
         });
         const resp = await fetch(`/api/articles?${params}`);
         const data = await resp.json();

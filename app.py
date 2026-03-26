@@ -42,7 +42,10 @@ def api_articles():
     """取得文章列表 API"""
     sentiment = request.args.get("sentiment", "all")
     source = request.args.get("source", "all")
-    days = int(request.args.get("days", 7))
+    days_param = request.args.get("days", "7")
+    # If numeric, convert to int, otherwise pass as string (like 'yesterday')
+    days = int(days_param) if days_param.isdigit() else days_param
+
     page = int(request.args.get("page", 1))
     per_page = int(request.args.get("per_page", 20))
 
@@ -52,6 +55,7 @@ def api_articles():
         days=days,
         page=page,
         per_page=per_page,
+        query=request.args.get("query", ""),
     )
     return jsonify(result)
 
@@ -61,6 +65,7 @@ def api_stats():
     """取得情感統計 API"""
     days = int(request.args.get("days", 7))
     stats = database.get_sentiment_stats(days=days)
+    print(f"[API] /api/stats days={days} -> Result: {stats}")
     return jsonify(stats)
 
 

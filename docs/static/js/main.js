@@ -25,12 +25,109 @@ document.addEventListener('DOMContentLoaded', () => {
     loadArticles();
     loadLogs();
 
+    // 綁定統計卡片點擊
+    document.getElementById('stat-total').onclick = () => openModal('total');
+    document.getElementById('stat-positive').onclick = () => openModal('positive');
+    document.getElementById('stat-negative').onclick = () => openModal('negative');
+    document.getElementById('stat-neutral').onclick = () => openModal('neutral');
+
+    // 綁定 AI 洞察卡片點擊
+    document.querySelector('.insight-positive').onclick = () => openModal('insight_pos');
+    document.querySelector('.insight-negative').onclick = () => openModal('insight_neg');
+    document.querySelector('.insight-neutral').onclick = () => openModal('insight_neu');
+
     // 每 60 秒自動重新整理統計
     setInterval(() => {
         loadStats();
         loadSummaries();
     }, 60000);
 });
+
+// =============================================================================
+// 詳細報表彈窗
+// =============================================================================
+async function openModal(type) {
+    const modal = document.getElementById('detail-modal');
+    const titleEl = document.getElementById('modal-title');
+    const bodyEl = document.getElementById('modal-body');
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // 禁止背景捲動
+    bodyEl.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>載入中...</p></div>';
+
+    let title = "";
+    let sentiment = "all";
+    
+    // 設定標題與篩選類型
+    switch(type) {
+        case 'total': title = "📄 全平台文章明細"; sentiment = "all"; break;
+        case 'positive': title = "🟢 正面評價明細"; sentiment = "positive"; break;
+        case 'negative': title = "🔴 負面輿情明細"; sentiment = "negative"; break;
+        case 'neutral': title = "⚪ 中立評價明細"; sentiment = "neutral"; break;
+        case 'insight_pos': title = "💡 正面亮點詳細分析"; break;
+        case 'insight_neg': title = "⚠️ 負面痛點深度報告"; break;
+        case 'insight_neu': title = "🧭 品牌綜合觀察週報"; break;
+    }
+    
+    titleEl.textContent = title;
+
+    try {
+        if (type.startsWith('insight')) {
+            // AI 摘要詳細版 (包含代表性文章)
+            const sentimentKey = type.split('_')[1]; // pos, neg, neu
+            const mapping = { 'pos': 'positive', 'neg': 'negative', 'neu': 'neutral' };
+            const fullSentiment = mapping[sentimentKey];
+            
+            const [summaryResp, articleResp] = await Promise.all([
+                fetch('/api/summaries'),
+                fetch(`/api/articles?sentiment=${fullSentiment}&days=1&per_page=10`)
+            ]);
+            const summaryData = await summaryResp.json();
+            const articleData = await articleResp.json();
+            
+            bodyEl.innerHTML = `
+                <div class="modal-report-section">
+                    <h3 style="color: var(--mcd-red); margin-bottom: 12px; font-size: 18px;">【AI 專家深度診斷】</h3>
+                    <div style="font-size: 15px; line-height: 1.8; color: var(--text-primary); margin-bottom: 32px; padding: 20px; background: var(--bg-primary); border-radius: 12px; border-left: 5px solid var(--mcd-yellow); box-shadow: var(--shadow-soft);">
+                        ${summaryData[fullSentiment].summary}
+                    </div>
+                    
+                    <h3 style="margin-bottom: 16px; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+                        <span>📚 最新相關文章參考</span>
+                        <small style="font-size: 12px; font-weight: normal; color: var(--text-muted);">(顯示最近 ${articleData.articles.length} 篇)</small>
+                    </h3>
+                    <div class="modal-article-list">
+                        ${articleData.articles.map(a => renderArticleCard(a)).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            // 文章清單版
+            const resp = await fetch(`/api/articles?sentiment=${sentiment}&days=1&per_page=100`);
+            const data = await resp.json();
+            
+            bodyEl.innerHTML = `
+                <div class="modal-list-stats" style="margin-bottom: 24px; padding: 12px 20px; background: var(--bg-secondary); border-radius: 8px; color: var(--text-secondary); font-weight: 500;">
+                    📊 今日已分析共搜集到 ${data.total} 篇相關文章 (此處預覽最後 100 篇)
+                </div>
+                <div class="articles-list">
+                    ${data.articles.map(a => renderArticleCard(a)).join('')}
+                </div>
+            `;
+        }
+    } catch (err) {
+        bodyEl.innerHTML = `
+            <div class="loading-placeholder">
+                <p style="color: var(--negative);">⚠️ 載入詳細報表失敗: ${err.message}</p>
+            </div>
+        `;
+    }
+}
+
+function closeModal() {
+    document.getElementById('detail-modal').classList.remove('active');
+    document.body.style.overflow = ''; // 恢復捲動
+}
 
 // =============================================================================
 // AI 摘要
@@ -53,7 +150,7 @@ async function loadSummaries() {
 // =============================================================================
 async function loadStats() {
     try {
-        const resp = await fetch('/api/stats?days=7');
+        const resp = await fetch('/api/stats?days=1');
         const stats = await resp.json();
 
         animateValue('stat-total-value', stats.total || 0);
@@ -76,7 +173,7 @@ async function loadStats() {
 
 async function loadSourceStats() {
     try {
-        const resp = await fetch('/api/source-stats?days=7');
+        const resp = await fetch('/api/source-stats?days=1');
         const stats = await resp.json();
 
         if (sourcePieChart) {
@@ -322,6 +419,7 @@ async function loadArticles(page = 1) {
     const sentiment = document.getElementById('filter-sentiment').value;
     const source = document.getElementById('filter-source').value;
     const days = document.getElementById('filter-days').value;
+    const query = document.getElementById('search-input')?.value || "";
 
     const listEl = document.getElementById('articles-list');
     listEl.innerHTML = `
@@ -333,7 +431,7 @@ async function loadArticles(page = 1) {
 
     try {
         const params = new URLSearchParams({
-            sentiment, source, days, page, per_page: 20,
+            sentiment, source, days, page, per_page: 20, query
         });
         const resp = await fetch(`/api/articles?${params}`);
         const data = await resp.json();
@@ -344,7 +442,7 @@ async function loadArticles(page = 1) {
                     <p style="font-size: 36px; margin-bottom: 8px;">📭</p>
                     <p>目前沒有符合條件的文章</p>
                     <p style="font-size: 12px; color: var(--text-muted);">
-                        點擊「立即執行」來搜集最新資料
+                        新的資料將在下次排程任務（07:00）自動搜集
                     </p>
                 </div>
             `;
@@ -474,79 +572,6 @@ async function loadLogs() {
     } catch (err) {
         console.error('載入執行記錄失敗:', err);
     }
-}
-
-// =============================================================================
-// 立即執行
-// =============================================================================
-async function runNow() {
-    const btn = document.getElementById('btn-run-now');
-    if (!btn || btn.classList.contains('loading')) return;
-    
-    // 檢查目前是否已在運行
-    const statusResp = await fetch('/api/run-status');
-    const statusData = await statusResp.json();
-    if (statusData.is_running) {
-        showToast('⚠️ 監控週期已在背景執行中', 'info');
-        checkRunStatus(); // 開始輪詢
-        return;
-    }
-
-    btn.classList.add('loading');
-    btn.innerHTML = '<span class="btn-icon">⏳</span> 啟動中...';
-
-    try {
-        const resp = await fetch('/api/run-now', { 
-            method: 'POST',
-            headers: {
-                'X-API-Token': typeof API_TOKEN !== 'undefined' ? API_TOKEN : ''
-            }
-        });
-        const data = await resp.json();
-
-        if (data.status === 'success') {
-            showToast('🚀 已在背景啟動搜集任務...', 'success');
-            checkRunStatus(); // 開始輪詢狀態
-        } else {
-            showToast(`❌ 啟動失敗: ${data.message || '未知錯誤'}`, 'error');
-            btn.classList.remove('loading');
-            btn.innerHTML = '<span class="btn-icon">⚡</span> 立即執行';
-        }
-    } catch (err) {
-        showToast(`❌ 請求失敗: ${err.message}`, 'error');
-        btn.classList.remove('loading');
-        btn.innerHTML = '<span class="btn-icon">⚡</span> 立即執行';
-    }
-}
-
-async function checkRunStatus() {
-    const btn = document.getElementById('btn-run-now');
-    if (!btn) return;
-
-    btn.classList.add('loading');
-    btn.innerHTML = '<span class="btn-icon">⏳</span> 執行中...';
-
-    const poll = setInterval(async () => {
-        try {
-            const resp = await fetch('/api/run-status');
-            const data = await resp.json();
-
-            if (!data.is_running) {
-                clearInterval(poll);
-                btn.classList.remove('loading');
-                btn.innerHTML = '<span class="btn-icon">⚡</span> 立即執行';
-                showToast('✅ 背景監控週期執行完成', 'success');
-                
-                // 重新載入資料
-                loadStats();
-                loadDailyStats(7);
-                loadArticles();
-                loadLogs();
-            }
-        } catch (err) {
-            console.error('輪詢狀態失敗:', err);
-        }
-    }, 5000); // 每 5 秒檢查一次
 }
 
 // =============================================================================

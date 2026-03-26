@@ -131,15 +131,41 @@ def get_unanalyzed_articles(limit: int = 200) -> list[dict]:
         return [dict(row) for row in rows]
 
 
-def get_articles(sentiment: str = None, source: str = None,
-                 days: int = 7, page: int = 1,
-                 per_page: int = 20) -> dict:
+from typing import Optional, Union, List, Dict
+
+def get_articles(sentiment: Optional[str] = None, source: Optional[str] = None,
+                 days: Union[int, str] = 7, page: int = 1,
+                 per_page: int = 20, query: Optional[str] = None) -> dict:
     """
     查詢文章列表，支援篩選與分頁。
     回傳 { articles, total, page, per_page, pages }
     """
-    conditions = ["collected_at >= ?"]
-    params = [(datetime.now() - timedelta(days=days)).isoformat()]
+    conditions = []
+    params = []
+
+    if days == "yesterday":
+        yest = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        today = datetime.now().strftime('%Y-%m-%d')
+        time_field = "analyzed_at"
+        # 篩選剛好是昨天那一整天的文章 (>= 昨天 00:00 且 < 今天 00:00)
+        conditions.append(f"{time_field} >= ?")
+        conditions.append(f"{time_field} < ?")
+        params.extend([yest, today])
+    elif str(days) == "1":
+        since = datetime.now().strftime('%Y-%m-%d')
+        time_field = "analyzed_at"
+        conditions.append(f"{time_field} >= ?")
+        params.append(since)
+    else:
+        try:
+            d_count = int(days)
+        except:
+            d_count = 7
+        since = (datetime.now() - timedelta(days=d_count)).isoformat()
+        time_field = "collected_at"
+        conditions.append(f"{time_field} >= ?")
+        params.append(since)
+
 
     if sentiment and sentiment != "all":
         conditions.append("sentiment = ?")
@@ -147,6 +173,11 @@ def get_articles(sentiment: str = None, source: str = None,
     if source and source != "all":
         conditions.append("source = ?")
         params.append(source)
+    if query and query.strip():
+        conditions.append("(title LIKE ? OR content LIKE ?)")
+        search_val = f"%{query.strip()}%"
+        params.append(search_val)
+        params.append(search_val)
 
     where_clause = " AND ".join(conditions)
 
@@ -178,12 +209,18 @@ def get_articles(sentiment: str = None, source: str = None,
 
 def get_sentiment_stats(days: int = 7) -> dict:
     """取得情感分析統計"""
-    since = (datetime.now() - timedelta(days=days)).isoformat()
+    if days == 1:
+        since = datetime.now().strftime('%Y-%m-%d')
+        time_field = "analyzed_at"
+    else:
+        since = (datetime.now() - timedelta(days=days)).isoformat()
+        time_field = "collected_at"
+    
     with get_db() as conn:
-        rows = conn.execute("""
+        rows = conn.execute(f"""
             SELECT sentiment, COUNT(*) as count
             FROM articles
-            WHERE collected_at >= ? AND analyzed_at IS NOT NULL
+            WHERE {time_field} >= ? AND analyzed_at IS NOT NULL
             GROUP BY sentiment
         """, (since,)).fetchall()
 
@@ -199,12 +236,18 @@ def get_sentiment_stats(days: int = 7) -> dict:
 
 def get_source_stats(days: int = 7) -> list[dict]:
     """取得平台來源統計"""
-    since = (datetime.now() - timedelta(days=days)).isoformat()
+    if days == 1:
+        since = datetime.now().strftime('%Y-%m-%d')
+        time_field = "analyzed_at"
+    else:
+        since = (datetime.now() - timedelta(days=days)).isoformat()
+        time_field = "collected_at"
+    
     with get_db() as conn:
-        rows = conn.execute("""
+        rows = conn.execute(f"""
             SELECT source, COUNT(*) as count
             FROM articles
-            WHERE collected_at >= ?
+            WHERE {time_field} >= ?
             GROUP BY source
         """, (since,)).fetchall()
         return [{"source": row["source"], "count": row["count"]} for row in rows]
@@ -299,17 +342,21 @@ def get_recent_logs(limit: int = 10) -> list[dict]:
 
 
 def get_sentiment_summaries() -> dict:
-    """取得正、負、中立各一則代表性的最新摘要"""
+    """取得正、負、中立各一則代表性的最新摘要 (僅限今日)"""
+    today = datetime.now().strftime('%Y-%m-%d')
     with get_db() as conn:
         res = {}
         for sentiment in ['positive', 'negative', 'neutral']:
-            # 優先找最新且有摘要的文章
+            # 僅搜尋今日分析完成且具有摘要的文章
             row = conn.execute("""
                 SELECT summary, title 
                 FROM articles 
-                WHERE sentiment = ? AND summary IS NOT NULL AND summary != ''
-                ORDER BY collected_at DESC LIMIT 1
-            """, (sentiment,)).fetchone()
+                WHERE sentiment = ? 
+                AND summary IS NOT NULL 
+                AND summary != ''
+                AND analyzed_at LIKE ?
+                ORDER BY analyzed_at DESC LIMIT 1
+            """, (sentiment, f"{today}%")).fetchone()
             
             if row:
                 res[sentiment] = {
@@ -318,7 +365,8 @@ def get_sentiment_summaries() -> dict:
                 }
             else:
                 res[sentiment] = {
-                    "summary": "目前尚無此類別的分析摘要數據。",
-                    "title": "無資料"
+                    "summary": "今日尚未產出此類別的分析摘要數據。",
+                    "title": "今日無摘要"
                 }
         return res
+

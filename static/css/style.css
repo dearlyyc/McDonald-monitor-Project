@@ -598,6 +598,48 @@ body::after {
     box-shadow: 0 0 0 3px rgba(255, 199, 44, 0.1);
 }
 
+.search-box {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    transition: all var(--transition);
+    overflow: hidden;
+}
+
+.search-box:focus-within {
+    border-color: var(--mcd-yellow);
+    box-shadow: 0 0 0 3px rgba(255, 199, 44, 0.1);
+}
+
+.search-box input {
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 13px;
+    width: 220px;
+}
+
+.search-box .search-btn {
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    border-left: 1px solid var(--border-color);
+}
+
+.search-box .search-btn:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
 /* --- Article Cards --- */
 .articles-list {
     display: flex;

@@ -35,7 +35,7 @@ class MonitorScheduler:
         self.is_running = False
 
     def start(self):
-        """啟動排程器 (執行三段階段任務：07:00 點搜集、08:00 備份、10:00 通知)"""
+        """啟動排程器 (執行三段階段任務：07:00 點搜集、08:00 備份、09:00 通知)"""
         
         # 1. 每天早上 07:00：搜集與分析文章 (不發送通知)
         self.scheduler.add_job(
@@ -62,19 +62,19 @@ class MonitorScheduler:
             coalesce=True
         )
 
-        # 3. 每天早上 10:00：發送通知訊息
+        # 3. 每天早上 09:00：發送通知訊息
         self.scheduler.add_job(
             self.send_daily_summary,
             "cron",
-            hour=10,
+            hour=9,
             minute=0,
             id="daily_notify",
-            name="每日 10:00 快訊通知任務",
+            name="每日 09:00 快訊通知任務",
             misfire_grace_time=28800,
             coalesce=True
         )
 
-        print(f"[Scheduler] 三段式任務已啟動：07:00 分析、08:00 備份、10:00 通知")
+        print(f"[Scheduler] 三段式任務已啟動：07:00 分析、08:00 備份、09:00 通知")
         self.scheduler.start()
 
     def backup_to_github(self):
