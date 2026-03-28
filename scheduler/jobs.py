@@ -81,7 +81,7 @@ class MonitorScheduler:
         """執行雙重備份 (GitHub + 本地)，並額外為 Obsidian 生成當日報告筆記"""
         print(f"\n[Backup] {datetime.now().isoformat()} - 開始執行雙重備份與筆記生成任務...")
         
-        obsidian_path = r"D:\OBSIDIAN_Vault\McDonald monitor Project"
+        obsidian_path = config.OBSIDIAN_VAULT_PATH
         if not os.path.exists(obsidian_path):
             os.makedirs(obsidian_path, exist_ok=True)
 

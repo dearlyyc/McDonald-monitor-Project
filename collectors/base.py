@@ -12,7 +12,7 @@ class BaseCollector(ABC):
         self.name = name
 
     @abstractmethod
-    def collect(self, keywords: list[str]) -> list[dict]:
+    def collect(self, keywords: list[str] | None = None) -> list[dict]:
         """
         搜集資料。
 

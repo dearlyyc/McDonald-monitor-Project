@@ -7,6 +7,7 @@ import json
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 
+from typing import Optional, Union, List, Dict
 import config
 
 
@@ -131,7 +132,21 @@ def get_unanalyzed_articles(limit: int = 200) -> list[dict]:
         return [dict(row) for row in rows]
 
 
-from typing import Optional, Union, List, Dict
+def _get_date_range(days: int | str = 7) -> tuple[str, str]:
+    """統一處理日期範圍邏輯，回傳 (since_date, time_field)"""
+    if days == "yesterday":
+        since = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        return since, "analyzed_at"
+    elif str(days) == "1":
+        since = datetime.now().strftime('%Y-%m-%d')
+        return since, "analyzed_at"
+    else:
+        try:
+            d_count = int(days)
+        except:
+            d_count = 7
+        since = (datetime.now() - timedelta(days=d_count)).isoformat()
+        return since, "collected_at"
 
 def get_articles(sentiment: Optional[str] = None, source: Optional[str] = None,
                  days: Union[int, str] = 7, page: int = 1,
@@ -143,28 +158,16 @@ def get_articles(sentiment: Optional[str] = None, source: Optional[str] = None,
     conditions = []
     params = []
 
+    since_date, time_field = _get_date_range(days)
+    
     if days == "yesterday":
-        yest = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-        today = datetime.now().strftime('%Y-%m-%d')
-        time_field = "analyzed_at"
-        # 篩選剛好是昨天那一整天的文章 (>= 昨天 00:00 且 < 今天 00:00)
+        today_date = datetime.now().strftime('%Y-%m-%d')
         conditions.append(f"{time_field} >= ?")
         conditions.append(f"{time_field} < ?")
-        params.extend([yest, today])
-    elif str(days) == "1":
-        since = datetime.now().strftime('%Y-%m-%d')
-        time_field = "analyzed_at"
-        conditions.append(f"{time_field} >= ?")
-        params.append(since)
+        params.extend([since_date, today_date])
     else:
-        try:
-            d_count = int(days)
-        except:
-            d_count = 7
-        since = (datetime.now() - timedelta(days=d_count)).isoformat()
-        time_field = "collected_at"
         conditions.append(f"{time_field} >= ?")
-        params.append(since)
+        params.append(since_date)
 
 
     if sentiment and sentiment != "all":
@@ -207,14 +210,9 @@ def get_articles(sentiment: Optional[str] = None, source: Optional[str] = None,
         }
 
 
-def get_sentiment_stats(days: int = 7) -> dict:
+def get_sentiment_stats(days: int | str = 7) -> dict:
     """取得情感分析統計"""
-    if days == 1:
-        since = datetime.now().strftime('%Y-%m-%d')
-        time_field = "analyzed_at"
-    else:
-        since = (datetime.now() - timedelta(days=days)).isoformat()
-        time_field = "collected_at"
+    since, time_field = _get_date_range(days)
     
     with get_db() as conn:
         rows = conn.execute(f"""
@@ -234,14 +232,9 @@ def get_sentiment_stats(days: int = 7) -> dict:
         return stats
 
 
-def get_source_stats(days: int = 7) -> list[dict]:
+def get_source_stats(days: int | str = 7) -> list[dict]:
     """取得平台來源統計"""
-    if days == 1:
-        since = datetime.now().strftime('%Y-%m-%d')
-        time_field = "analyzed_at"
-    else:
-        since = (datetime.now() - timedelta(days=days)).isoformat()
-        time_field = "collected_at"
+    since, time_field = _get_date_range(days)
     
     with get_db() as conn:
         rows = conn.execute(f"""

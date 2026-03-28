@@ -69,18 +69,20 @@ SCHEDULE_CRON_MINUTE = int(os.environ.get("SCHEDULE_CRON_MINUTE", "0"))
 SCHEDULE_INTERVAL_HOURS = int(os.environ.get("SCHEDULE_INTERVAL_HOURS", "24"))
 
 # =============================================================================
-# 資料庫設定
+# 檔案與路徑設定
 # =============================================================================
-DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mcdonalds_monitor.db")
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+DATABASE_PATH = os.path.join(PROJECT_ROOT, "mcdonalds_monitor.db")
+OBSIDIAN_VAULT_PATH = os.environ.get("OBSIDIAN_VAULT_PATH", r"D:\OBSIDIAN_Vault\McDonald monitor Project")
+LOG_PATH = os.path.join(PROJECT_ROOT, "server.log")
 
 # =============================================================================
 # Flask 設定
 # =============================================================================
 FLASK_HOST = "0.0.0.0"
 FLASK_PORT = 5000
-FLASK_DEBUG = True
+FLASK_DEBUG = False
 SECRET_KEY = os.environ.get("SECRET_KEY", "mcdonalds-monitor-secret-key-change-me")
-# 立即執行功能已轉由排程全權處理
 APP_URL = os.environ.get("APP_URL", "http://127.0.0.1:5000")
 GITHUB_PAGES_URL = os.environ.get("GITHUB_PAGES_URL", "https://dearlyyc.github.io/McDonald-monitor-Project/")
 

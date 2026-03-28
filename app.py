@@ -3,10 +3,21 @@
 """
 from flask import Flask, render_template, jsonify, request
 import atexit
+from datetime import datetime
 
 import config
 import database
 from scheduler import MonitorScheduler
+
+import logging
+
+# 設定伺服器運行日誌
+logging.basicConfig(
+    filename='server.log',
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = config.SECRET_KEY
@@ -19,8 +30,10 @@ import os
 # 初始化排程器（避免在 Flask Debug 模式下重複啟動）
 monitor_scheduler = MonitorScheduler()
 if not config.FLASK_DEBUG or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    logger.info("正在啟動背景排程器...")
     monitor_scheduler.start()
     atexit.register(monitor_scheduler.stop)
+    logger.info("背景排程器已啟動完畢")
 
 
 # =============================================================================
@@ -58,6 +71,17 @@ def api_articles():
         query=request.args.get("query", ""),
     )
     return jsonify(result)
+
+
+@app.route("/api/health")
+def api_health():
+    """系統健康檢查 API"""
+    return jsonify({
+        "status": "up",
+        "time": datetime.now().isoformat(),
+        "scheduler_running": monitor_scheduler.scheduler.running,
+        "database": os.path.exists(config.DATABASE_PATH)
+    })
 
 
 @app.route("/api/stats")

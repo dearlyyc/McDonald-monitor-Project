@@ -18,7 +18,7 @@ class TavilySearchCollector(BaseCollector):
         super().__init__("Tavily Search")
         self.api_key = config.TAVILY_API_KEY
 
-    def collect(self, keywords: list[str] = None) -> list[dict]:
+    def collect(self, keywords: list[str] | None = None) -> list[dict]:
         """
         透過 Tavily API 搜尋資訊。
 
@@ -36,11 +36,16 @@ class TavilySearchCollector(BaseCollector):
         if not keywords:
             keywords = ["麥當勞", "麥當勞 活動", "麥當勞 優惠"]
         
-        for kw in keywords[:3]: # 限制前幾個重要關鍵字，避免請求過多
+        # 計算昨日日期
+        from datetime import timedelta
+        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        
+        for kw in keywords[:3]: 
             queries = [
-                f"{kw} 2026", # 加入年份確保最新
-                f"{kw} 最新"
+                f"{kw} {yesterday}", # 使用具體日期精確搜尋
+                f"麥當勞 news {yesterday}" # 加入 news 加強新聞屬性
             ]
+
             for query in queries:
                 try:
                     items = self._search_tavily(query)
@@ -89,6 +94,12 @@ class TavilySearchCollector(BaseCollector):
                 content = item.get("content", "")
                 url = item.get("url", "")
                 published_at = item.get("published_date", self._now_iso())
+                
+                # 🛑 嚴格過濾：僅保留昨天的文章
+                from datetime import timedelta
+                yesterday_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+                if published_at and published_at[:10] < yesterday_str:
+                    continue
 
                 if not title or not url:
                     continue

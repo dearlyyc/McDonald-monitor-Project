@@ -14,7 +14,7 @@ class DDGSearchCollector(BaseCollector):
     def __init__(self):
         super().__init__("DuckDuckGo Search")
 
-    def collect(self, keywords: list[str] = None) -> list[dict]:
+    def collect(self, keywords: list[str] | None = None) -> list[dict]:
         """
         透過 DuckDuckGo 搜尋資訊。
         """
@@ -22,10 +22,20 @@ class DDGSearchCollector(BaseCollector):
         if not keywords:
             keywords = ["麥當勞", "麥當勞 活動", "麥當勞 優惠"]
         
+        # 計算昨日日期與日期範圍
+        from datetime import timedelta
+        today = datetime.now().strftime('%Y-%m-%d')
+        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        day_before = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')
+        
         # 針對關鍵字組合進行搜尋
         queries = []
         for kw in keywords[:3]:
-            queries.extend([f"{kw} 2026", f"{kw} 最新新聞"])
+            # 使用 DuckDuckGo 的 date filter 語法
+            queries.extend([
+                f"{kw} after:{day_before} before:{today}", 
+                f"麥當勞 news {yesterday}"
+            ])
 
         ddgs = DDGS()
         for query in queries:
@@ -45,7 +55,7 @@ class DDGSearchCollector(BaseCollector):
                         "content": content[:2000],
                         "source": "DuckDuckGo Search",
                         "url": url,
-                        "published_at": self._now_iso(),
+                        "published_at": yesterday, # 直接標註為昨天，因為我們使用了 after/before 語法
                         "raw_data": {
                             "query": query,
                         },
