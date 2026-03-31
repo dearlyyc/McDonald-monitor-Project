@@ -13,10 +13,12 @@ def export_to_github_pages():
     # 讀取所需資料 (模擬 API 回應)
     static_data = {}
     
-    # 1. Stats
+    # 1. Stats (導出 1 天與 7 天，因 UI 初始化預設請求 1 天，但篩選器預設 7 天)
+    static_data["/api/stats?days=1"] = database.get_sentiment_stats(days=1)
     static_data["/api/stats?days=7"] = database.get_sentiment_stats(days=7)
     
     # 2. Source Stats
+    static_data["/api/source-stats?days=1"] = database.get_source_stats(days=1)
     static_data["/api/source-stats?days=7"] = database.get_source_stats(days=7)
     
     # 3. Daily Stats
@@ -26,12 +28,30 @@ def export_to_github_pages():
     # 4. Logs
     static_data["/api/logs?limit=50"] = database.get_recent_logs(limit=50)
     
-    # 5. Articles (預先打包常見的篩選條件：前 3 頁)
-    for d in [7, 14, 30]:
+    # 5. Summaries (AI 摘要卡片)
+    static_data["/api/summaries"] = database.get_sentiment_summaries()
+
+    # 6. Articles (預先打包常見的篩選條件)
+    # 打包：近 7 天、近 1 天 的前 3 頁文章 (這是 UI 最常用的)
+    for d in [1, 7, 14, 30]:
         for p in range(1, 4):
             # 所有情感、所有來源
-            res = database.get_articles(sentiment="all", source="all", days=d, page=p, per_page=20)
-            static_data[f"/api/articles?sentiment=all&source=all&days={d}&page={p}&per_page=20"] = res
+            url = f"/api/articles?sentiment=all&source=all&days={d}&page={p}&per_page=20"
+            static_data[url] = database.get_articles(sentiment="all", source="all", days=d, page=p, per_page=20)
+            
+            # 若為第一頁，也要支援不帶 query string 的簡化比對 (雖然前端通常會帶)
+            if p == 1:
+                query_url = f"/api/articles?sentiment=all&source=all&days={d}&page=1&per_page=20&query="
+                static_data[query_url] = static_data[url]
+
+    # 特殊：Modal 點擊時會請求的當日文章 (sentiment = positive/negative/neutral, days=1, per_page=100)
+    for s in ['positive', 'negative', 'neutral', 'all']:
+        url = f"/api/articles?sentiment={s}&days=1&per_page=100"
+        static_data[url] = database.get_articles(sentiment=s, days=1, per_page=100)
+        # 同時支援 insight modal 的 10 篇請求
+        url_10 = f"/api/articles?sentiment={s}&days=1&per_page=10"
+        static_data[url_10] = database.get_articles(sentiment=s, days=1, per_page=10)
+
 
     # 讀取原始 HTML
     template_path = os.path.join(os.path.dirname(__file__), "templates", "index.html")
