@@ -10,7 +10,7 @@ import database
 from collectors import (
     GoogleNewsCollector, TavilySearchCollector, DDGSearchCollector,
 )
-from analyzer import SentimentAnalyzer
+from analyzer import SentimentAnalyzer, TechBriefingAnalyzer
 from notifier import LineNotifier, TelegramNotifier
 
 
@@ -32,6 +32,7 @@ class MonitorScheduler:
         self.analyzer = SentimentAnalyzer()
         self.line_notifier = LineNotifier()
         self.telegram_notifier = TelegramNotifier()
+        self.tech_analyzer = TechBriefingAnalyzer()
         self.is_running = False
 
     def start(self):
@@ -71,6 +72,18 @@ class MonitorScheduler:
             id="daily_notify",
             name="每日 09:00 快訊通知任務",
             misfire_grace_time=28800,
+            coalesce=True
+        )
+
+        # 4. 每天固定時間：科技晨報
+        self.scheduler.add_job(
+            self.tech_analyzer.run,
+            "cron",
+            hour=config.TECH_REPORT_CRON_HOUR,
+            minute=config.TECH_REPORT_CRON_MINUTE,
+            id="tech_morning_report",
+            name="每日科技晨報任務",
+            misfire_grace_time=3600,
             coalesce=True
         )
 

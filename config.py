@@ -77,6 +77,12 @@ OBSIDIAN_VAULT_PATH = os.environ.get("OBSIDIAN_VAULT_PATH", r"D:\OBSIDIAN_Vault\
 LOG_PATH = os.path.join(PROJECT_ROOT, "server.log")
 
 # =============================================================================
+# 科技晨報設定
+# =============================================================================
+TECH_REPORT_CRON_HOUR = int(os.environ.get("TECH_REPORT_CRON_HOUR", "7"))
+TECH_REPORT_CRON_MINUTE = int(os.environ.get("TECH_REPORT_CRON_MINUTE", "30"))
+
+# =============================================================================
 # Flask 設定
 # =============================================================================
 FLASK_HOST = "0.0.0.0"
